@@ -94,7 +94,10 @@ std::istream& operator>>(std::istream& in, Album& obj){
     in>>c;
     in.ignore();
     while(c != 'l' && c != 'e' && c !='s'){
-        std::cout<<" Invalid input! Try again: ";
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout<<" Invalid input! Please enter a valid format: ";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         in>>c;
     }
     obj.format = c;
@@ -328,12 +331,11 @@ std::istream& operator>>(std::istream& in, Review& obj){
     float rating;
     bool ok = false;
 
-    std::cin.ignore();
     std::cout<<" Rating (out of 10): ";
     while(!(in>>rating) || rating < 0 || rating > 10){
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-        std::cout<<" Invalid input! Try again: ";
+        std::cout<<" Invalid input! Please enter a valid rating: ";
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         in.clear();
         in.ignore(1000, '\n');
@@ -343,8 +345,11 @@ std::istream& operator>>(std::istream& in, Review& obj){
 
     std::cout<<" Date (dd-mm-yyyy): ";
     in.getline(buffer, 256);
-    while(buffer[2] != '-' || buffer[5] != '-' || buffer[0] > 3 || buffer[3]>1 || strlen(buffer) != 10){
-        std::cout<<" Invalid input! Try again: ";
+    while(buffer[2] != '-' || buffer[5] != '-' || strlen(buffer) != 10){
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout<<" Invalid input! Please enter a valid date: ";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         in.getline(buffer, 256);
     }
     delete[] obj.date;
@@ -368,7 +373,10 @@ std::istream& operator>>(std::istream& in, Review& obj){
             ok = true;
         }
         else{
-            std::cout<<" Invalid input! Try again: ";
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+            SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+            std::cout<<" Invalid input! Please enter Yes/No: ";
+            SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             in.getline(buffer, 256);
         }
     }
@@ -389,9 +397,9 @@ std::ostream& operator<<(std::ostream& out, const Review& obj){
         out<<"\n No review paragraph registered!";
     out<<" Recommended: ";
     if(obj.recommend== 1)
-        out<< " Yes!\n";
+        out<<"Yes!\n";
     else 
-        out<< " No!\n";
+        out<<"No!\n";
 
     return out;
 }
@@ -421,6 +429,7 @@ class User{
 
         void displayAlbums();
         void displaySongs();
+        void displayReviews();
         
         const int getAlbumCnt() const {return albumCnt;}
         const int getSongCnt() const {return songCnt;}
@@ -516,7 +525,8 @@ void User::addAlbum(Album* p){
         setAlbumCnt(++cnt);
     }
     else{
-        std::cout<<"Album limit reached!\n";
+        std::cout<<"Album limit reached!";
+        std::cin.get();
         delete p;
     }
 }
@@ -528,7 +538,8 @@ void User::addSong(Song* p){
         setSongCnt(++cnt);
     }
     else{
-        std::cout<<"Song limit reached!\n";
+        std::cout<<"Song limit reached!";
+        std::cin.get();
         delete p;
     }
 }
@@ -540,7 +551,8 @@ void User::addReview(Review* p){
         setReviewCnt(++cnt);
     }
     else{
-        std::cout<<"Review limit reached!\n";
+        std::cout<<"Review limit reached!";
+        std::cin.get();
         delete p;
     }
 }
@@ -548,22 +560,48 @@ void User::addReview(Review* p){
 void User::displayAlbums(){
     int cnt = getAlbumCnt();
     if(cnt == 0){
-        std::cout<<"The playlist is currently empty!\n";
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout<<"This playlist is currently empty!";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        std::cin.get();
         return;
     }
     for(int i = 0; i < cnt; i++)
         std::cout<<i<<". "<<*this->albums[i]<<'\n';
+    std::cin.get();
 }
 
 void User::displaySongs(){
     int cnt = getSongCnt();
     if(cnt == 0){
-        std::cout<<"The playlist is currently empty!\n";
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout<<"This playlist is currently empty!";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        std::cin.get();
         return;
     }
     for(int i = 0; i < cnt; i++)
         std::cout<<i<<". "<<*this->songs[i]<<'\n';
+    std::cin.get();
 }
+
+void User::displayReviews(){
+    int cnt = getReviewCnt();
+    if(cnt == 0){
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+        std::cout<<"No reviews submited yet!";
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        std::cin.get();
+        return;
+    }
+    for(int i = 0; i < cnt; i++)
+        std::cout<<i<<". "<<*this->reviews[i]<<'\n';
+    std::cin.get();
+}
+
 
 int User::getUserCnt(){
     return userCnt;
@@ -587,7 +625,8 @@ std::istream& operator>>(std::istream& in, User& obj){
     obj.name=strcpy(new char[strlen(buffer)+1], buffer);
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
     SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
-    std::cout<<"\nNew user registered!\n";
+    std::cout<<"\nNew user registered!";
+    std::cin.get();
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
     return in;
@@ -597,9 +636,10 @@ std::ostream& operator<<(std::ostream& out, const User& obj){
     out<<" User #"<<obj.id<<'\n';
     if(obj.name != nullptr)
         out<<" Name: "<<obj.name<<'\n';
-    else    
+    else{  
         out<<"\n No user registered!";
-  
+        std::cin.get();
+    }
     return out;
 }
 
@@ -615,6 +655,7 @@ class Menu{
         ~Menu();
         void run();
         void userMenu(int index);
+        void reviewMenu(int index);
 };
 
 Menu::~Menu(){
@@ -685,6 +726,7 @@ void Menu::run(){
                 SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
                 std::cout<<"Invalid option!\n";
                 SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                std::cin.get();
             }
         }
     }
@@ -743,6 +785,47 @@ void Menu::userMenu(int index){
             }
             case 6:{
                 std::cout<<"";
+                reviewMenu(index);
+                break;
+            }
+            default:{
+                HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+                std::cout<<"Invalid option!\n";
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                std::cin.get();
+            }
+
+        }
+    }
+}
+
+void Menu::reviewMenu(int index){
+    while(true){
+        std::cout<<"\n"<<*users[index]<<"\n";
+        std::cout<<"0 - Exit\n";
+        std::cout<<"1 - Write a review\n";
+        std::cout<<"2 - Review log\n";
+        std::cout<<"\nOption: ";
+
+        int option;
+        std::cin>>option;
+        std::cin.ignore();
+        std::cout<<'\n';
+
+        switch(option){
+            case 0:
+                return;
+            case 1:{
+                std::cout<<"Review:\n\n";
+                Review* r = new Review();
+                std::cin>>*r;
+                (*users[index]).addReview(r);
+                break;
+            }
+            case 2:{
+               (*users[index]).displayReviews();
+                break;
             }
             default:{
                 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
