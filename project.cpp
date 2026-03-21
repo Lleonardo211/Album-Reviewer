@@ -269,6 +269,7 @@ class Review{
     private:
         static int reviewCnt;
         const int id;
+        char* albumName;
         float rating;
         char* date;
         char* text;
@@ -276,7 +277,7 @@ class Review{
     
     public:
         Review();
-        Review(float rating, char* date, char* text, bool recommend);
+        Review(char* albumName, float rating, char* date, char* text, bool recommend);
         Review(const Review& obj);
         Review& operator=(const Review& obj);
         ~Review();
@@ -288,13 +289,15 @@ class Review{
 int Review::reviewCnt = 1;
 
 Review::Review() : id(reviewCnt++){
+    this->albumName = strcpy(new char[4], "N/A");
     this->rating = 0;
     this->date = strcpy(new char[4], "N/A");
     this->text = strcpy(new char[4], "N/A");
     this->recommend = 0; 
 }
 
-Review::Review(float rating, char* date, char* text, bool recommend) : id(reviewCnt++){
+Review::Review(char* albumName, float rating, char* date, char* text, bool recommend) : id(reviewCnt++){
+    this->albumName = strcpy(new char[strlen(albumName) + 1], albumName);
     this->rating = rating;
     this->date = strcpy(new char[11], date);
     this->text = strcpy(new char[strlen(text) + 1], text);
@@ -302,6 +305,7 @@ Review::Review(float rating, char* date, char* text, bool recommend) : id(review
 }
 
 Review::Review(const Review& obj) : id(reviewCnt++){
+    this->albumName = strcpy(new char[strlen(obj.albumName) + 1], obj.albumName);
     this->rating = obj.rating;
     this->date = strcpy(new char[11], obj.date);
     this->text = strcpy(new char[strlen(obj.text)+1], obj.text);
@@ -312,6 +316,8 @@ Review& Review::operator=(const Review& obj){
     if(this == &obj){
         return *this;
     }
+    delete[] albumName;
+    this->albumName = strcpy(new char[strlen(obj.albumName) + 1], obj.albumName);
     this->rating = obj.rating;
     delete[] date;
     this->date = strcpy(new char[11], obj.date);
@@ -322,6 +328,7 @@ Review& Review::operator=(const Review& obj){
 }
 
 Review::~Review(){
+    delete[] albumName;
     delete[] date;
     delete[] text;
 }
@@ -330,6 +337,11 @@ std::istream& operator>>(std::istream& in, Review& obj){
     char buffer[256];
     float rating;
     bool ok = false;
+
+    std::cout<<" Album Name: ";
+    in.getline(buffer, 256);
+    delete[] obj.albumName;
+    obj.albumName=strcpy(new char[strlen(buffer)+1], buffer);
 
     std::cout<<" Rating (out of 10): ";
     while(!(in>>rating) || rating < 0 || rating > 10){
@@ -386,11 +398,15 @@ std::istream& operator>>(std::istream& in, Review& obj){
 
 std::ostream& operator<<(std::ostream& out, const Review& obj){
     out<<" Review #"<<obj.id<<'\n';
+    if(obj.albumName != nullptr)
+        out<<" Album Name: "<<obj.albumName<<'\n';
+    else    
+        out<<"\n Band name not registered!";
     out<<" Rating: "<<obj.rating<<'\n';
     if(obj.date != nullptr)
         out<<" Date: "<<obj.date<<'\n';
     else    
-        out<<"\n Band name not registered!";
+        out<<"\n Date not registered!";
     if(obj.text != nullptr)
         out<<" Review: "<<obj.text<<'\n';
     else    
@@ -455,7 +471,6 @@ User::User() : id(userCnt++){
         this->songs[i] = nullptr;
         this->reviews[i] = nullptr;
     } 
-
     this->albumCnt = 0;
     this->songCnt = 0;
     this->reviewCnt = 0;
@@ -468,7 +483,6 @@ User::User(char* name, int albumCnt, int songCnt, int reviewCnt) : id(userCnt++)
         this->songs[i] = nullptr;
         this->reviews[i] = nullptr;
     }
-
     this->albumCnt = 0;
     this->songCnt = 0;
     this->reviewCnt = 0;
@@ -568,7 +582,7 @@ void User::displayAlbums(){
         return;
     }
     for(int i = 0; i < cnt; i++)
-        std::cout<<i<<". "<<*this->albums[i]<<'\n';
+        std::cout<<*this->albums[i]<<'\n';
     std::cin.get();
 }
 
@@ -583,7 +597,7 @@ void User::displaySongs(){
         return;
     }
     for(int i = 0; i < cnt; i++)
-        std::cout<<i<<". "<<*this->songs[i]<<'\n';
+        std::cout<<*this->songs[i]<<'\n';
     std::cin.get();
 }
 
@@ -598,7 +612,7 @@ void User::displayReviews(){
         return;
     }
     for(int i = 0; i < cnt; i++)
-        std::cout<<i<<". "<<*this->reviews[i]<<'\n';
+        std::cout<<*this->reviews[i]<<'\n';
     std::cin.get();
 }
 
@@ -672,7 +686,7 @@ void Menu::printUsers() const{
         return;
     }
     for(size_t i = 0; i < users.size(); i++)
-        std::cout<<" "<<i<<". "<<*users[i]<<'\n';
+        std::cout<<*users[i]<<'\n';
 }
 
 int Menu::pickUser() const{
@@ -685,11 +699,11 @@ int Menu::pickUser() const{
         return -1;
     }
     printUsers();
-    std::cout<<"Pick user index (type -1 to cancel): ";
+    std::cout<<"Pick user index (type 0 to cancel): ";
     int index;
     std::cin>>index;
     std::cin.ignore();
-    if(index < 0 || index >= (int)users.size()) return -1;
+    if(index < 1 || index >= (int)users.size()) return -1;
     return index;
 }
 
@@ -707,11 +721,15 @@ void Menu::run(){
         std::cout<<'\n';
 
         switch(option){
-            case 0:
-                std::cout<<"See you soon!\n";
+            case 0:{
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
+                SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
+                std::cout<<"See you soon!\n\n";
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
                 return;
             case 1:{
-                int index = pickUser();
+                int index = pickUser() + 1; 
                 if(index != -1) userMenu(index);
                 break;
             }
@@ -770,21 +788,18 @@ void Menu::userMenu(int index){
                 break;
             }
             case 4:{
-                std::cout<<"";
                 Song* s = new Song();
                 std::cin>>*s;
                 (*users[index]).addSong(s);
                 break;
             }
             case 5:{
-                std::cout<<"";
                 Album* a = new Album();
                 std::cin>>*a;
                 (*users[index]).addAlbum(a);
                 break;
             }
             case 6:{
-                std::cout<<"";
                 reviewMenu(index);
                 break;
             }
@@ -804,7 +819,7 @@ void Menu::reviewMenu(int index){
     while(true){
         std::cout<<"\n"<<*users[index]<<"\n";
         std::cout<<"0 - Exit\n";
-        std::cout<<"1 - Write a review\n";
+        std::cout<<"1 - Review an album\n";
         std::cout<<"2 - Review log\n";
         std::cout<<"\nOption: ";
 
