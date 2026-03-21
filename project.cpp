@@ -282,6 +282,18 @@ class Review{
         Review& operator=(const Review& obj);
         ~Review();
 
+        const char* getAlbumName() const;
+        float getRating() const;
+        const char* getDate() const; 
+        const char* getText() const; 
+        bool getRecommend() const; 
+        void setAlbumName(char* name);
+        void setRating(float rating);
+        void setDate(char* date); 
+        void setText(char* text); 
+        void setRecommend(bool x); 
+
+
         friend std::istream& operator>>(std::istream& in, Review& obj);
         friend std::ostream& operator<<(std::ostream& out, const Review& obj);
 };
@@ -331,6 +343,49 @@ Review::~Review(){
     delete[] albumName;
     delete[] date;
     delete[] text;
+}
+
+const char* Review::getAlbumName() const{
+    return albumName;
+}
+
+float Review::getRating() const{
+    return rating;
+}
+
+const char* Review::getDate() const{
+    return date;
+}
+
+const char* Review::getText() const{
+    return text;
+}
+
+bool Review::getRecommend() const{
+    return recommend;
+}
+
+void Review::setAlbumName(char* newName){
+    delete[] this->albumName;
+    this->albumName = strcpy(new char[strlen(newName)+1], newName);
+}
+
+void Review::setRating(float rating){
+    this->rating = rating;
+}
+
+void Review::setDate(char* newDate){
+    delete[] this->date;
+    this->date= strcpy(new char[strlen(newDate)+1], newDate);
+}
+
+void Review::setText(char* newText){
+    delete[] this->text;
+    this->text= strcpy(new char[strlen(newText)+1], newText);
+}
+
+void Review::setRecommend(bool x){
+    this->recommend = x;
 }
 
 std::istream& operator>>(std::istream& in, Review& obj){
@@ -431,6 +486,8 @@ class User{
         Song* songs[100];
         int reviewCnt;
         Review* reviews[100];
+
+        double avgUserRating();
       
     public:
         User();
@@ -453,6 +510,8 @@ class User{
         void setAlbumCnt(int cnt) {albumCnt = cnt;}
         void setSongCnt(int cnt) {songCnt = cnt;}
         void setReviewCnt(int cnt) {reviewCnt = cnt;}
+
+        double avgUserReview();
 
         static int getUserCnt();
         const char* getName() const;
@@ -616,7 +675,6 @@ void User::displayReviews(){
     std::cin.get();
 }
 
-
 int User::getUserCnt(){
     return userCnt;
 }
@@ -628,6 +686,20 @@ const char* User::getName() const{
 void User::setName(char* newName){
     delete[] this->name;
     this->name=strcpy(new char[strlen(newName)+1], newName);
+}
+
+double User::avgUserRating(){
+    int cnt = getReviewCnt();
+    if(cnt == 0) return 0.0;
+    double aux = 0.0;
+    for(int i = 0; i < cnt; i++)
+        aux+=(*reviews[i]).getRating();
+    aux/=cnt;
+    return aux;
+}
+
+double User::avgUserReview(){
+    return avgUserRating();
 }
 
 std::istream& operator>>(std::istream& in, User& obj){
@@ -670,6 +742,7 @@ class Menu{
         void run();
         void userMenu(int index);
         void reviewMenu(int index);
+        void reviewStats(int index);
 };
 
 Menu::~Menu(){
@@ -821,6 +894,7 @@ void Menu::reviewMenu(int index){
         std::cout<<"0 - Exit\n";
         std::cout<<"1 - Review an album\n";
         std::cout<<"2 - Review log\n";
+        std::cout<<"3 - Review statistics\n";
         std::cout<<"\nOption: ";
 
         int option;
@@ -840,6 +914,13 @@ void Menu::reviewMenu(int index){
             }
             case 2:{
                (*users[index]).displayReviews();
+                break;
+            }
+            case 3:{
+                std::cout<<"\n"<<*users[index]<<"\n";
+                std::cout<<"No. of albums reviewed: "<<(*users[index]).getReviewCnt()<<'\n';
+                std::cout<<"Average rating given: "<<(*users[index]).avgUserReview()<<'\n';
+                std::cin.get();
                 break;
             }
             default:{
