@@ -281,7 +281,8 @@ class Review{
         Review(const Review& obj);
         Review& operator=(const Review& obj);
         ~Review();
-
+        
+        static int getReviewCnt();
         const char* getAlbumName() const;
         float getRating() const;
         const char* getDate() const; 
@@ -296,6 +297,7 @@ class Review{
 
         friend std::istream& operator>>(std::istream& in, Review& obj);
         friend std::ostream& operator<<(std::ostream& out, const Review& obj);
+        friend std::ostream& operator*(std::ostream& out, const Review& obj);
 };
 
 int Review::reviewCnt = 1;
@@ -343,6 +345,10 @@ Review::~Review(){
     delete[] albumName;
     delete[] date;
     delete[] text;
+}
+
+int Review::getReviewCnt(){
+    return reviewCnt;
 }
 
 const char* Review::getAlbumName() const{
@@ -475,6 +481,29 @@ std::ostream& operator<<(std::ostream& out, const Review& obj){
     return out;
 }
 
+std::ostream& operator*(std::ostream& out, const Review& obj){
+    if(obj.albumName != nullptr)
+        out<<" Album Name: "<<obj.albumName<<'\n';
+    else    
+        out<<"\n Band name not registered!";
+    out<<" Rating: "<<obj.rating<<'\n';
+    if(obj.date != nullptr)
+        out<<" Date: "<<obj.date<<'\n';
+    else    
+        out<<"\n Date not registered!";
+    if(obj.text != nullptr)
+        out<<" Review: "<<obj.text<<'\n';
+    else    
+        out<<"\n No review paragraph registered!";
+    out<<" Recommended: ";
+    if(obj.recommend== 1)
+        out<<"Yes!\n";
+    else 
+        out<<"No!\n";
+
+    return out;
+}
+
 class User{
     private:
         static int userCnt;
@@ -516,6 +545,8 @@ class User{
         static int getUserCnt();
         const char* getName() const;
         void setName(char* name);
+
+        void displayAnonymous();
  
         friend std::istream& operator>>(std::istream& in, User& obj);
         friend std::ostream& operator<<(std::ostream& out, const User& obj);
@@ -702,6 +733,12 @@ double User::avgUserReview(){
     return avgUserRating();
 }
 
+void User::displayAnonymous(){
+    int cnt = getReviewCnt();
+    for(int i = 0; i < cnt; i++)
+        std::cout**this->reviews[i]<<'\n';
+}
+
 std::istream& operator>>(std::istream& in, User& obj){
     char buffer[256];
 
@@ -743,6 +780,7 @@ class Menu{
         void userMenu(int index);
         void reviewMenu(int index);
         void reviewStats(int index);
+        void displayAll();
 };
 
 Menu::~Menu(){
@@ -776,7 +814,7 @@ int Menu::pickUser() const{
     int index;
     std::cin>>index;
     std::cin.ignore();
-    if(index < 1 || index >= (int)users.size()) return -1;
+    if(index < 0 || index > (int)users.size()) return -1;
     return index;
 }
 
@@ -786,6 +824,7 @@ void Menu::run(){
         std::cout<<"0 - Exit\n";
         std::cout<<"1 - Log in\n";
         std::cout<<"2 - Register\n";
+        std::cout<<"3 - Browse reviews\n";
         std::cout<<"\nOption: ";
 
         int option;
@@ -802,7 +841,7 @@ void Menu::run(){
             }
                 return;
             case 1:{
-                int index = pickUser() + 1; 
+                int index = pickUser(); 
                 if(index != -1) userMenu(index);
                 break;
             }
@@ -810,6 +849,10 @@ void Menu::run(){
                 User* p = new User();
                 std::cin>>*p;
                 users.push_back(p);
+                break;
+            }
+            case 3:{
+                Menu::displayAll();
                 break;
             }
             default:{
@@ -824,6 +867,7 @@ void Menu::run(){
 }
 
 void Menu::userMenu(int index){
+    index--;
     while(true){
         std::cout<<"\n"<<*users[index]<<"\n";
         std::cout<<"0 - Exit\n";
@@ -933,6 +977,16 @@ void Menu::reviewMenu(int index){
         }
     }
 }
+
+void Menu::displayAll(){
+    int cntR, cntU;
+    cntR = Review::getReviewCnt() - 1;
+    cntU = User::getUserCnt() - 1;
+    std::cout<<cntR<<" reviews by "<<cntU<<" poeple:\n\n";
+    for(size_t i = 0; i < users.size(); i++)
+        (*users[i]).displayAnonymous();
+}
+
 
 int main(){  
 
