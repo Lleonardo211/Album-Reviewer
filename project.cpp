@@ -20,6 +20,8 @@ class Album{
         Album& operator=(const Album& obj);
         ~Album();   
 
+        int getLength(){return length;}
+
         friend std::istream& operator>>(std::istream& in, Album& obj);
         friend std::ostream& operator<<(std::ostream& out, const Album& obj);
 };
@@ -152,6 +154,7 @@ class Song{
         Song& operator=(const Song& obj);
         ~Song();
         
+        int getLength(){return length;}
         
         friend std::istream& operator>>(std::istream& in, Song& obj);
         friend std::ostream& operator<<(std::ostream& out, const Song& obj);
@@ -529,8 +532,8 @@ class User{
         void addSong(Song* p);
         void addReview(Review* p);
 
-        void displayAlbums();
-        void displaySongs();
+        void displayAlbums(int index);
+        void displaySongs(int index);
         void displayReviews();
         
         const int getAlbumCnt() const {return albumCnt;}
@@ -539,6 +542,9 @@ class User{
         void setAlbumCnt(int cnt) {albumCnt = cnt;}
         void setSongCnt(int cnt) {songCnt = cnt;}
         void setReviewCnt(int cnt) {reviewCnt = cnt;}
+
+        int getAlbumLength(int index) const;
+        int getSongLength(int index) const;
 
         double avgUserReview();
 
@@ -661,22 +667,23 @@ void User::addReview(Review* p){
     }
 }
 
-void User::displayAlbums(){
+void User::displayAlbums(int index){
     int cnt = getAlbumCnt();
     if(cnt == 0){
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-        std::cout<<"This playlist is currently empty!";
+        std::cout<<"This list is currently empty!";
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         std::cin.get();
         return;
     }
     for(int i = 0; i < cnt; i++)
         std::cout<<*this->albums[i]<<'\n';
-    std::cin.get();
+    
+    std::cout<<"Number of albums: "<<getAlbumCnt()<<'\n';
 }
 
-void User::displaySongs(){
+void User::displaySongs(int index){
     int cnt = getSongCnt();
     if(cnt == 0){
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);   
@@ -688,7 +695,8 @@ void User::displaySongs(){
     }
     for(int i = 0; i < cnt; i++)
         std::cout<<*this->songs[i]<<'\n';
-    std::cin.get();
+    
+    std::cout<<"Number of songs: "<<getSongCnt()<<'\n';
 }
 
 void User::displayReviews(){
@@ -717,6 +725,18 @@ const char* User::getName() const{
 void User::setName(char* newName){
     delete[] this->name;
     this->name=strcpy(new char[strlen(newName)+1], newName);
+}
+
+int User::getAlbumLength(int index) const{
+    int length;
+    length = albums[index]->getLength();
+    return length;
+}
+
+int User::getSongLength(int index) const{
+    int length;
+    length = songs[index]->getLength();
+    return length;
 }
 
 double User::avgUserRating(){
@@ -781,6 +801,8 @@ class Menu{
         void reviewMenu(int index);
         void reviewStats(int index);
         void displayAll();
+        int albumPlaytime(int* index);
+        int songPlaytime(int* index);
 };
 
 Menu::~Menu(){
@@ -817,6 +839,25 @@ int Menu::pickUser() const{
     if(index < 0 || index > (int)users.size()) return -1;
     return index;
 }
+
+int Menu::albumPlaytime(int* index){
+    int sum = 0;
+    int cnt = (*users[*index]).getAlbumCnt();
+    for(int i = 0; i < cnt; i++){
+        sum += (*users[*index]).getAlbumLength(i);
+    }
+    return sum;
+}
+
+int Menu::songPlaytime(int* index){
+    int sum = 0;
+    int cnt = (*users[*index]).getSongCnt();
+    for(int i = 0; i < cnt; i++){
+        sum += (*users[*index]).getSongLength(i);
+    }
+    return sum;
+}
+
 
 void Menu::run(){
     while(true){
@@ -896,12 +937,20 @@ void Menu::userMenu(int index){
             }
             case 2:{
                 std::cout<<"Favorite Songs:\n\n";
-                (*users[index]).displaySongs();
+                (*users[index]).displaySongs(index);
+                if(songPlaytime(&index)){
+                    std::cout<<"Total playtime: "<<songPlaytime(&index)<<'\n';
+                    std::cin.get();
+                }
                 break;
             }
             case 3:{
                 std::cout<<"Favorite Albums:\n\n";
-                (*users[index]).displayAlbums();
+                (*users[index]).displayAlbums(index);
+                if(albumPlaytime(&index)){
+                    std::cout<<"Total playtime: "<<albumPlaytime(&index)<<'\n';
+                    std::cin.get();
+                }
                 break;
             }
             case 4:{
@@ -1000,7 +1049,7 @@ int main(){
           /  ^  \    |  |     |  |_)  | |  |  |  | |  \  /  |                                      d$$$$"
          /  /_\  \   |  |     |   _  <  |  |  |  | |  |\/|  |                                    .$$$$$"
         /  _____  \  |  `----.|  |_)  | |  `--'  | |  |  |  |                                   z$$$$$"
-       /__/     \__\ |_______||______/   \______/  |__|  |__|                                  z$$$$P
+       /__/     \__\ |_______||______/   \______/  |__|  |__|                                  z4$$$$P
                                                                                              d$$$$$$$$$$"
         .______       ___________    ____  __   ___________    __    ____   _______.        *******$$$"
         |   _  \     |   ____\   \  /   / |  | |   ____\   \  /  \  /   /  /       |             .$$$"
